@@ -871,7 +871,7 @@ async function connect(kind: 'create' | 'join', reconnect = false) {
       if (desiredSession && room?.mode === 'cache') peers.suspend();
       else peers.close();
       broadcast.close();
-      broadcastFallback.close();
+      liveRelay.close();
       publisher?.pause();
       pendingControl = false;
       connectionView('连接已断开');
@@ -1177,7 +1177,7 @@ function renderLiveStatus() {
       : connected === expected
         ? `正在提供视频 · 已连接 ${connected} 位观众`
         : `正在提供视频 · 已连接 ${connected} / ${expected} 位观众`;
-    const relayStatus = broadcastFallback.status();
+    const relayStatus = liveRelay.status();
     if (broadcastRelayEnabled) text = relayStatus;
     else if (failed) text += ' · 连接失败，正在重试';
     if (!room?.media || !broadcast.owns(room.media.url)) text = '共享已中断，请重新选择视频';
@@ -1192,10 +1192,10 @@ function renderLiveStatus() {
         ? '当前没有配置视频中继；如果双方网络无法直连，需要部署中继或改用各自播放。'
         : '';
     if (reception.state === 'offline') text = '共享者已离线，等待重新连接';
-    else if (broadcastFallback.active() && playbackPermissionNeeded)
+    else if (liveRelay.active() && playbackPermissionNeeded)
       text = sharing.kind === 'screen' ? '点击声音按钮开始观看' : '点击播放以启用声音';
-    else if (broadcastFallback.active() && room?.playback.paused) text = '房间已暂停播放';
-    else if (broadcastFallback.status()) text = broadcastFallback.status();
+    else if (liveRelay.active() && room?.playback.paused) text = '房间已暂停播放';
+    else if (liveRelay.status()) text = liveRelay.status();
     else if (['failed', 'closed', 'disconnected'].includes(reception.state))
       text = '共享已开始 · 视频连接失败，正在重试' + (reception.hasTurn ? '' : ' · 当前未配置中继');
     else if (playbackPermissionNeeded)
@@ -1680,7 +1680,7 @@ async function clearPlayback(keepSite = false, keepPreview = false) {
   window.__VS_Danmaku.clear();
   if (isNative && siteOpen)
     void nativeCall('danmaku', { enabled: danmakuEnabled, clear: true }).catch(error);
-  if (!keepPreview) broadcastFallback.close();
+  if (!keepPreview) liveRelay.close();
   playbackPermissionNeeded = false;
   sourceFailed = false;
   playerGeneration++;
@@ -1986,7 +1986,7 @@ function applyPlayback(_explicit = false) {
       // A remote MediaStream has a live timeline. Seeking or rate-correcting it
       // would freeze playback. Versioned controls instead drive the publisher.
       if (playback.paused) video.pause();
-      else if (broadcastFallback.active()) broadcastFallback.resume();
+      else if (liveRelay.active()) liveRelay.resume();
       else if (video.srcObject && video.paused) playElement(video);
       lastRevision = playback.revision;
       return;
@@ -2129,7 +2129,7 @@ const broadcast = new BroadcastPeers(
   send,
   (stream) => {
     if (room?.media?.broadcast?.host === memberId && room.media.broadcast.kind === 'site') return;
-    if (broadcastFallback.active()) return;
+    if (liveRelay.active()) return;
     if (stream) {
       if (video.srcObject !== stream) video.srcObject = stream;
       video.hidden = false;
@@ -2153,7 +2153,7 @@ const broadcast = new BroadcastPeers(
     render();
   },
 );
-const broadcastFallback = new BroadcastRelayClient(
+const liveRelay = new BroadcastRelayClient(
   video,
   (url) => {
     const previous = relayPlaybackUrl;
@@ -2181,14 +2181,14 @@ const qualitySelect = $<HTMLSelectElement>('broadcast-quality');
 qualitySelect.value = ['smooth', 'hd', 'high'].includes(saved('broadcast-quality'))
   ? saved('broadcast-quality')
   : 'hd';
-broadcastFallback.setQuality(qualitySelect.value);
+liveRelay.setQuality(qualitySelect.value);
 qualitySelect.onchange = () => {
   save('broadcast-quality', qualitySelect.value);
-  broadcastFallback.setQuality(qualitySelect.value);
+  liveRelay.setQuality(qualitySelect.value);
 };
 function releasePublisher() {
   movieBoost.reset();
-  broadcastFallback.close();
+  liveRelay.close();
   pendingBroadcastUrl = '';
   if (nativeCapture) {
     nativeCapture = false;
@@ -2445,7 +2445,7 @@ $('stop-broadcast').onclick = () => {
 function configureBroadcast() {
   if (connected) {
     broadcast.configure(room, memberId, !broadcastRelayEnabled);
-    broadcastFallback.configure(
+    liveRelay.configure(
       room,
       memberId,
       resume,
@@ -2582,10 +2582,10 @@ $('copy-video-diagnostics').onclick = () => {
         roomConnected: connected,
         mediaKind: room?.media?.broadcast?.kind ?? null,
         ...network,
-        fallback: broadcastFallback.diagnostics(),
+        fallback: liveRelay.diagnostics(),
         player: {
-          bound: !!video.srcObject || !!video.getAttribute('src') || broadcastFallback.active(),
-          transport: broadcastFallback.active()
+          bound: !!video.srcObject || !!video.getAttribute('src') || liveRelay.active(),
+          transport: liveRelay.active()
             ? 'websocket'
             : video.srcObject
               ? 'webrtc'

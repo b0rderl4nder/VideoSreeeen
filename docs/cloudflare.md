@@ -9,16 +9,16 @@
 先运行受控验证和试打包：
 
 ```powershell
-./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','verify') -PrioritizeBuildWhenNoGame
-./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','test:worker') -PrioritizeBuildWhenNoGame
-./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','test:p2p') -PrioritizeBuildWhenNoGame
+./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','verify') -MinFreeMiB 0
+./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','test:worker') -MinFreeMiB 0
+./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','test:p2p') -MinFreeMiB 0
 ```
 
 `test:worker` 在本地 workerd 中验证建房、加入、真实 WebSocket、主动休眠后唤醒、成员恢复、原站视频代理关闭与独立备用通道。`test:broadcast-relay` 在浏览器中阻断 WebRTC 候选，验证真实备用视频、音频解码、重新加入和清理。`test:p2p` 使用一个浏览器上下文和 Windows 壳，验证实际视频分块互传。这些测试均不部署云端资源。
 
 只有确认目标账号和部署意图后执行 `npm run worker:deploy`。首次部署会创建名为 `videosreeeen` 的 Worker 与绑定的 `WatchRoom` SQLite Durable Object namespace；`wrangler.jsonc` 使用 `new_sqlite_classes`，适配免费计划。部署前查看同名资源，避免覆盖已有服务。不要修改账号的订阅或启用付费产品。
 
-本机运行所有构建、验证和部署命令时继续使用 `scripts/controlled.ps1`。2026-10-18 用户为本项目明确要求不再因游戏或此前内存门槛中断，使用 `-AllowGameThisRun -MinFreeMiB 0`，仍保留串行、堆上限和所属进程清理；不将此例外用于其他项目。
+本机运行所有构建、验证和部署命令时继续使用 `scripts/controlled.ps1`。本项目入口使用 `-MinFreeMiB 0`，仍读取内存并保留串行、堆上限和所属进程清理。
 
 ## 网页与客户端
 

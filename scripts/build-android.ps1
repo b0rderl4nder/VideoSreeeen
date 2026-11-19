@@ -1,4 +1,4 @@
-param([string]$SdkRoot=$env:ANDROID_SDK_ROOT,[string]$Gradle='gradle.bat',[switch]$RerunChecks,[switch]$Release)
+param([string]$SdkRoot=$env:ANDROID_SDK_ROOT,[string]$Gradle='gradle.bat',[switch]$RerunChecks,[switch]$Release,[string]$OutputDirectory)
 $ErrorActionPreference='Stop'
 $workspace=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 if(-not $SdkRoot -or -not (Test-Path -LiteralPath (Join-Path $SdkRoot 'platforms/android-35/android.jar'))){throw '请通过 -SdkRoot 或 ANDROID_SDK_ROOT 指定包含 Android 35 的 SDK'}
@@ -16,8 +16,8 @@ if($Release -and -not $env:VS_ANDROID_KEYSTORE){
 $capital=if($Release){'Release'}else{'Debug'}
 $gradleArguments=@('-p','android',":app:assemble$capital",":app:lint$capital",'--no-daemon','--max-workers=1','--console=plain')
 if($RerunChecks){$gradleArguments+='--rerun-tasks'}
-try{& (Join-Path $PSScriptRoot 'controlled.ps1') -File $Gradle -Arguments $gradleArguments -PrioritizeBuildWhenNoGame -AllowGameThisRun -MinFreeMiB 0}finally{if($Release){Remove-Item Env:VS_ANDROID_STORE_PASSWORD -ErrorAction SilentlyContinue}}
-$output=Join-Path $workspace 'artifacts/android'
+try{& (Join-Path $PSScriptRoot 'controlled.ps1') -File $Gradle -Arguments $gradleArguments -MinFreeMiB 0}finally{if($Release){Remove-Item Env:VS_ANDROID_STORE_PASSWORD -ErrorAction SilentlyContinue}}
+$output=if($OutputDirectory){$OutputDirectory}else{Join-Path $workspace 'artifacts/android'}
 New-Item -ItemType Directory -Path $output -Force|Out-Null
 $package=Get-Content -LiteralPath (Join-Path $workspace 'package.json') -Raw | ConvertFrom-Json
 $name=if($Release){'VideoSreeeen-Android.apk'}else{"VideoSreeeen-$($package.version)-debug.apk"}
