@@ -3,17 +3,17 @@ import { themeRegistry } from './themes/catalog';
 import { ThemeController } from './themes/core/controller';
 
 const preferenceKey = 'videosreeeen.appearance';
-function read(kind: 'localStorage' | 'sessionStorage', key: string) {
+function readPreference() {
   try {
-    return window[kind].getItem(key);
+    return localStorage.getItem(preferenceKey);
   } catch {
     return null;
   }
 }
-function write(kind: 'localStorage' | 'sessionStorage', key: string, value: string | null) {
+function writePreference(value: string | null) {
   try {
-    if (value === null) window[kind].removeItem(key);
-    else window[kind].setItem(key, value);
+    if (value === null) localStorage.removeItem(preferenceKey);
+    else localStorage.setItem(preferenceKey, value);
   } catch {
     /* Appearance works when storage is blocked. */
   }
@@ -22,7 +22,7 @@ function randomTheme() {
   const themes = themeRegistry.list();
   return themes[crypto.getRandomValues(new Uint32Array(1))[0]! % themes.length]!.id;
 }
-const preference = read('localStorage', preferenceKey);
+const preference = readPreference();
 const pageUrl = new URL(location.href),
   requested = pageUrl.searchParams.get('skin');
 let remembered = themeRegistry.has(preference);
@@ -30,7 +30,7 @@ let initial = themeRegistry.has(preference) ? preference : themeRegistry.default
 if (themeRegistry.has(requested)) {
   initial = requested;
   remembered = true;
-  write('localStorage', preferenceKey, initial);
+  writePreference(initial);
   pageUrl.searchParams.delete('skin');
   history.replaceState(history.state, '', pageUrl);
 }
@@ -109,7 +109,7 @@ export function setupAppearance(settings: HTMLElement) {
     const ticket = ++selection;
     void themeController.select(id).then((applied) => {
       if (applied && ticket === selection) {
-        write('localStorage', preferenceKey, id);
+        writePreference(id);
         remembered = true;
       }
       update();
@@ -137,9 +137,9 @@ export function setupAppearance(settings: HTMLElement) {
     .addEventListener('click', () => select(randomTheme()));
   themeController.subscribe(update);
   themeRegistry.subscribe(() => {
-    const saved = read('localStorage', preferenceKey);
+    const saved = readPreference();
     if (saved && !themeRegistry.has(saved)) {
-      write('localStorage', preferenceKey, null);
+      writePreference(null);
       remembered = false;
     }
     renderChoices();

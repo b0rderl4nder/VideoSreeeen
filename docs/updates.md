@@ -16,10 +16,9 @@ Android 从固定仓库的 `update.json` 获取版本号、单调增加的 versi
 
 ## 维护者发布
 
-1. 修改 package.json / package-lock.json 的版本、Android versionName / versionCode、服务健康版本与发布说明；完成测试和产物检查。
-2. 本机按受控入口构建 Windows 和 Android 发布包。APK 使用 `scripts/build-android.ps1 -Release`，不安装到任何设备。
-3. 提交并推送对应源码，然后运行 `npm run release:prepare`，在 `artifacts/release/<版本>/` 生成两端包、Windows 更新元数据、Android 更新清单与校验和。
-4. `npm run release:publish` 核对主分支提交和清洁工作树，先创建草稿并上传完整文件，确认全部资产的大小和服务端 SHA-256 后才公开。已公开版本不覆盖；失败保留草稿，同一提交且已有文件摘要一致时可继续上传缺失文件，不替换已有资产。
+1. 更新版本、Android versionName / versionCode 与发布说明，经 PR 合并，并确认目标 main 提交的 Verify 成功。切到这个提交，确保工作区干净。
+2. 从锁文件安装依赖后，运行 `npm run release:prepare`，或直接执行 `./scripts/build-release.ps1 -SdkRoot <SDK> -Gradle <gradle.bat>`。入口在全新暂存目录组装 Windows 和助手产物，重跑 Android 发布任务，成功后生成发布目录和本地提交／摘要回执。已有同版本目录时停止，避免覆写既有回退包。
+3. `npm run release:publish` 校验 GitHub main 当前提交、最新 Verify 结果、本地回执与每项资产的 SHA-256。上传草稿后再对照服务端大小和摘要，发布前复查提交与 CI。失败保留草稿，同一提交可继续上传缺失文件。已公开版本不覆盖，本地回执不随 Release 上传。
 
 只更新已有 Release 的介绍或下载说明时，编辑 `docs/release-notes.md`，通过 `gh release edit <标签> --notes-file docs/release-notes.md` 更新正文；不重新执行发布脚本，不覆盖资产或移动标签。正文修改后再核对公开页面和下载入口。
 
@@ -27,7 +26,7 @@ Android 发布需要 `VS_ANDROID_KEYSTORE`、`VS_ANDROID_STORE_PASSWORD`，别�
 
 正式发布统一使用上述本地入口。创建版本标签或 Release 不再触发云端客户端构建，避免本地发布成功后又重复构建、重复发布或发送额外的构建失败通知。普通主分支 / PR 的 Verify 检查仍保留。
 
-如需云端构建，可在 Actions 手动运行 `Build client artifacts (manual)`；它只生成可下载的构建产物，没有 Release 写入权限，也不发布版本。Android 仍需提前配置 `ANDROID_KEYSTORE_BASE64` / `ANDROID_STORE_PASSWORD` 两个仓库 Secret，必须使用同一正式签名；不自动上传本机签名文件。账号禁用 Actions 时不影响本地发布和用户获取更新。
+如需云端构建，可在 Actions 手动运行 `Build client artifacts (manual)`；它只生成可下载的构建产物，没有 Release 写入权限，也不发布版本。Android 仍需提前配置 `ANDROID_KEYSTORE_BASE64` / `ANDROID_STORE_PASSWORD` 两个仓库 Secret，必须使用同一正式签名；不自动上传本机签名文件。正式发布需要对应主分支提交的 Verify 通过。已有发行的下载和客户端更新仍走公开 Release。
 
 2026-10-28 的 v0.4.6 标签曾触发一轮多余构建，Android 在 SDK 准备步骤报 `Failed to find package 'tools'`，Windows 成功而云端 publish 跳过。已显式改为安装 platform-tools、Android 35 平台及 35.0.0 build-tools，并移除标签触发和云端 publish 任务。这次云端失败没有修改已发布的本地产物；没有重跑失败任务或重新发布 v0.4.6。具体日志见 [失败任务](https://github.com/BorderArea01/VideoSreeeen/actions/runs/40649183476)。SDK 配置已静态核对，修正后的云端 Android 构建尚未实际运行。
 

@@ -1,25 +1,11 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { readFile, readdir, stat } from 'node:fs/promises';
-import { createReadStream } from 'node:fs';
-import { createHash } from 'node:crypto';
+import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-const repo = 'BorderArea01/VideoSreeeen';
-const run = (command, args) =>
-  execFileSync(command, args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+import { assertVerifiedMain, cleanCommit, repo, run, verifiedAssets } from './release-evidence.mjs';
 const pkg = JSON.parse(await readFile('package.json', 'utf8')),
   tag = 'v' + pkg.version;
-assert.equal(
-  run('git', ['status', '--porcelain']),
-  '',
-  'Commit and push the validated source before publishing',
-);
-const commit = run('git', ['rev-parse', 'HEAD']);
-assert.equal(
-  JSON.parse(run('gh', ['api', `repos/${repo}/git/ref/heads/main`])).object.sha,
-  commit,
-  'Push main before publishing',
-);
+const commit = cleanCommit();
+assertVerifiedMain(commit);
 const list = JSON.parse(
   run('gh', ['release', 'list', '--repo', repo, '--limit', '100', '--json', 'tagName,isDraft']),
 );
@@ -29,28 +15,7 @@ assert.ok(
   'A published release with this version already exists; assets are immutable',
 );
 const directory = `artifacts/release/${pkg.version}`;
-const names = await readdir(directory);
-assert.deepEqual(
-  [...names].sort(),
-  [
-    'update.json',
-    'SHA256SUMS.txt',
-    'latest.yml',
-    'VideoSreeeen-Setup.exe',
-    'VideoSreeeen-Setup.exe.blockmap',
-    `VideoSreeeen-Portable-${pkg.version}.exe`,
-    'VideoSreeeen-Android.apk',
-    'VideoSreeeen-SourceHelper.zip',
-  ].sort(),
-);
-for (const required of [
-  'update.json',
-  'SHA256SUMS.txt',
-  'latest.yml',
-  'VideoSreeeen-Setup.exe',
-  'VideoSreeeen-Android.apk',
-])
-  assert.ok(names.includes(required));
+const { names, hashes } = await verifiedAssets(directory, commit, pkg.version);
 assert.equal(
   JSON.parse(await readFile(join(directory, 'update.json'), 'utf8')).version,
   pkg.version,
@@ -92,13 +57,11 @@ assert.equal(
 );
 async function verifyAsset(asset) {
   assert.ok(names.includes(asset.name), 'Unexpected draft asset ' + asset.name);
-  const file = join(directory, asset.name),
-    hash = createHash('sha256');
-  for await (const block of createReadStream(file)) hash.update(block);
+  const file = join(directory, asset.name);
   assert.equal(asset.size, (await stat(file)).size);
   assert.equal(
     asset.digest,
-    'sha256:' + hash.digest('hex'),
+    'sha256:' + hashes[asset.name],
     'Draft asset differs from validated file',
   );
 }
@@ -118,6 +81,8 @@ if (missing.length)
 const result = view();
 assert.equal(result.assets.length, names.length);
 for (const asset of result.assets) await verifyAsset(asset);
+assert.equal(cleanCommit(), commit, 'Source changed during release upload');
+assertVerifiedMain(commit);
 run('gh', [
   'release',
   'edit',

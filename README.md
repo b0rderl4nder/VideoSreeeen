@@ -4,9 +4,9 @@
 
 **优先共同播放**：每位成员独立加载视频，房间同步暂停、进度与倍速，保留原始画质。共享画面和本地视频实时提供继续作为可选方式。
 
-**[打开网页版](https://videosreeeen.pages.dev)** · [Windows 安装版](https://github.com/BorderArea01/VideoSreeeen/releases/latest/download/VideoSreeeen-Setup.exe) · [Android APK](https://github.com/BorderArea01/VideoSreeeen/releases/latest/download/VideoSreeeen-Android.apk) · [全部发行版](https://github.com/BorderArea01/VideoSreeeen/releases) · [反馈问题](https://github.com/BorderArea01/VideoSreeeen/issues/new/choose)
+**[打开网页版](https://videosreeeen.pages.dev)** · [Windows 安装版](https://github.com/b0rderl4nder/VideoSreeeen/releases/latest/download/VideoSreeeen-Setup.exe) · [Android APK](https://github.com/b0rderl4nder/VideoSreeeen/releases/latest/download/VideoSreeeen-Android.apk) · [全部发行版](https://github.com/b0rderl4nder/VideoSreeeen/releases) · [反馈问题](https://github.com/b0rderl4nder/VideoSreeeen/issues/new/choose)
 
-> **当前版本：[v0.4.6](https://github.com/BorderArea01/VideoSreeeen/releases/tag/v0.4.6)**。B 站由房主浏览器的轻量视频源助手复用已有登录取源，观众只用网页。已通过正式公网房间双网页真实 1080p、音频及暂停 / 跳转验证；游客低画质取源和扫码登录流程已移除。
+> **当前版本：[v0.4.6](https://github.com/b0rderl4nder/VideoSreeeen/releases/tag/v0.4.6)**。B 站由房主浏览器的轻量视频源助手复用已有登录取源，观众只用网页。已通过正式公网房间双网页真实 1080p、音频及暂停 / 跳转验证；游客低画质取源和扫码登录流程已移除。
 
 **网页持续更新，安装包独立发布。** 2026-10-31 网页更新包含语音断线恢复、聊天室票选移出、分批缓存清理、下一集首帧准备、缓存设置界面与可选交互皮肤；不代表 v0.4.6 安装包已包含这些新增改动。
 
@@ -156,14 +156,14 @@ B 站取源在房主浏览器内完成，Cloudflare 只处理房间状态；视�
 
 | 平台                | 入口                                                                                                                                                                                                                    | 当前边界                                                         |
 | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Windows x64         | [安装版](https://github.com/BorderArea01/VideoSreeeen/releases/latest/download/VideoSreeeen-Setup.exe)／[便携版](https://github.com/BorderArea01/VideoSreeeen/releases/download/v0.4.6/VideoSreeeen-Portable-0.4.6.exe) | 安装版支持应用内下载并重启更新；便携版用于直接运行               |
-| Android 8.0+        | [APK](https://github.com/BorderArea01/VideoSreeeen/releases/latest/download/VideoSreeeen-Android.apk)                                                                                                                   | 应用内下载后由系统确认覆盖安装；已生成发行包，设备实测待补齐     |
+| Windows x64         | [安装版](https://github.com/b0rderl4nder/VideoSreeeen/releases/latest/download/VideoSreeeen-Setup.exe)／[便携版](https://github.com/b0rderl4nder/VideoSreeeen/releases/download/v0.4.6/VideoSreeeen-Portable-0.4.6.exe) | 安装版支持应用内下载并重启更新；便携版用于直接运行               |
+| Android 8.0+        | [APK](https://github.com/b0rderl4nder/VideoSreeeen/releases/latest/download/VideoSreeeen-Android.apk)                                                                                                                   | 应用内下载后由系统确认覆盖安装；已生成发行包，设备实测待补齐     |
 | 浏览器              | [直接打开](https://videosreeeen.pages.dev)                                                                                                                                                                              | 无需安装；标签页共享由电脑浏览器发起，移动端按实际浏览器能力使用 |
 | iPhone / iPad / Mac | [浏览器入口](https://videosreeeen.pages.dev)                                                                                                                                                                            | 不开发苹果原生客户端；Safari / iOS 实播、后台与锁屏仍待验收      |
 
 **安装与更新**：Windows 安装版在“设置与帮助 → 版本与更新”中检查、下载更新，按提示重启安装；Android 下载后由系统确认安装。公开下载和更新元数据已于 2026-10-27 复验；这不代表已执行旧版本覆盖安装或手机真机更新。Android 正式版保持固定包名和签名，可覆盖同签名旧版；早期 debug APK 与正式版签名不同，不能直接覆盖。
 
-Release 同时提供 [SHA256SUMS.txt](https://github.com/BorderArea01/VideoSreeeen/releases/latest/download/SHA256SUMS.txt)，可核对下载文件。发布步骤、签名与校验和说明见 [更新与分发](docs/updates.md)，此前的公开访问问题与恢复记录见 [GitHub 公开访问记录](docs/github-access.md)。
+Release 同时提供 [SHA256SUMS.txt](https://github.com/b0rderl4nder/VideoSreeeen/releases/latest/download/SHA256SUMS.txt)，可核对下载文件。发布步骤、签名与校验和说明见 [更新与分发](docs/updates.md)，此前的公开访问问题与恢复记录见 [GitHub 公开访问记录](docs/github-access.md)。
 
 ## 使用前了解
 
@@ -222,7 +222,7 @@ npm run package:windows   # Windows x64 安装版与便携版
 维护工作站的构建与验收通过 `scripts/controlled.ps1` 串行运行，参数遵守 [AGENTS.md](AGENTS.md)。例如：
 
 ```powershell
-./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','build') -PrioritizeBuildWhenNoGame
+./scripts/controlled.ps1 -File npm.cmd -Arguments @('run','build') -MinFreeMiB 0
 ```
 
 Android 需要 JDK 17+、Android SDK 35、Gradle 8.13；先构建前端，再生成 APK：

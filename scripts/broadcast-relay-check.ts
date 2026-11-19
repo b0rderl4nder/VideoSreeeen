@@ -32,7 +32,7 @@ const evidence: Record<string, any> = { origin, directBlocked: true, generatedSo
 const debugBytes: Buffer[] = [],
   lateBytes: Buffer[] = [];
 try {
-  const context = await browser.newContext();
+  const context = await browser.newContext({ locale: 'zh-CN', timezoneId: 'Asia/Shanghai' });
   await context.addInitScript(() => {
     (window as any).__pcs = [];
     const Native = window.RTCPeerConnection;
@@ -395,10 +395,16 @@ try {
     { timeout: 30000 },
   );
   evidence.qualityChange = { videoBitsPerSecond: 1_800_000, playbackResumed: true };
-  // A new receiver requires a fresh container header, not stale cached chunks.
+  // Reload restores membership but creates a fresh media receiver.
+  const member = guest
+    .locator('#members .member')
+    .filter({ hasText: '（我）' })
+    .locator('.latency');
+  const memberId = await member.getAttribute('data-member');
+  assert.ok(memberId);
   await guest.reload();
-  await guest.locator('#name-input').fill('重新加入观众');
-  await guest.locator('#join-button').click();
+  await member.waitFor();
+  assert.equal(await member.getAttribute('data-member'), memberId);
   await guest.locator('#live-sound[aria-label="启用声音"]').waitFor();
   await guest.locator('#live-sound').click();
   await guest.waitForFunction(
@@ -411,7 +417,7 @@ try {
     {},
     { timeout: 65000 },
   );
-  evidence.lateJoin = true;
+  evidence.reloadRestoresReceiver = true;
   await host.locator('#stop-broadcast').click();
   await guest.locator('#welcome').waitFor();
   await guest.waitForFunction(
